@@ -237,6 +237,51 @@ var renderPage = function(data) {
             $(this).css('box-shadow', `inset 0 0 0 4px ${color},0 0 1px rgba(0,0,0,0)`);
         });
     });
+};
+
+function renderOrgEvents(data) {
+    data.filter(function (event) {
+        var title = "";
+        var timeStamp = "<span class='time-stamp'>" + new Date(event.created_at).toLocaleDateString("en-US") + "</span>";
+        var description = " ";
+        var repo = "<a href='https://github.com/" + event.repo.name + "'>" + event.repo.name + "</a>";
+        var actor = "<a href='https://github.com/"+ event.actor.login +"'>"+
+          "<img class='actor-avatar' src='" + event.actor.avatar_url + "'/>" +
+          event.actor.display_login +
+          "</a>";
+
+        switch (event.type) {
+          case "WatchEvent":
+            title = actor + " " + event.payload.action + " watching " + repo;
+            description += "";
+            break;
+          case "PushEvent":
+            title = actor + " pushed " + event.payload.size + " commits to "+ repo;
+            description += "";
+            break;
+          case "PullRequestEvent":
+            title = actor + " " + event.payload.action + " a pull request in " + repo;
+            description += "<a href='" + event.payload.pull_request.html_url + "'>#" + event.payload.pull_request.number + "</a> " + event.payload.pull_request.title;
+            break;
+          case "IssueCommentEvent":
+            title = actor + " commented on " + (event.payload.issue.pull_request ? "pull request" : "issue") + " <a href='" + event.payload.issue.html_url + "'>#" + event.payload.issue.number + "</a>" + " in " + repo;
+            description += "<a href='" + event.payload.comment.html_url + "'>view comment</a>";
+            break;
+          case "ForkEvent":
+            title = actor + " forked " + repo + " to " + "<a href='" + event.payload.forkee.html_url + "'>" + event.payload.forkee.full_name + "</a>";
+            break;
+          case "IssuesEvent":
+            title = actor + " " + event.payload.action + " a pull request in " + repo;
+            description += "<a href='" + event.payload.issue.html_url + "'>#" + event.payload.issue.number + "</a> " + event.payload.issue.title;
+            break;
+        }
+
+        $("#organization-repo-events").append("<div class='col-lg-12 organization-repo-event'>" +
+             "<div class='col-lg-12'>" + title + "</div>" +
+            "<div class='col-lg-12'>" + description + "</div>" +
+            "<div class='col-lg-12 text-right'>" + timeStamp + "</div>"+
+        "</div>");
+    });
 }
 
 $.getJSON(window.location.origin+"/config.json", function(config) {
@@ -244,6 +289,12 @@ $.getJSON(window.location.origin+"/config.json", function(config) {
         dataType: 'json',
         url: 'https://api.github.com/orgs/' + config.git_org_name + '/repos?page=1&per_page=100&callback=?',
         success: renderPage
+    });
+
+    $.ajax({
+        dataType: 'json',
+        url: 'https://api.github.com/orgs/' + config.git_org_name + '/events',
+        success: renderOrgEvents
     });
 
     document.title = config.title;
