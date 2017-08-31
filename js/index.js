@@ -314,7 +314,7 @@ function renderOrgEvents(data) {
     });
 }
 
-$.getJSON(window.location.origin+"/config.json", function(config) {
+$.getJSON("./config.json", function(config) {
     var item = $("#isotope-container").html();
     for (var i =0; i < 15; i++) {
       //$("#isotope-container").append(item);
